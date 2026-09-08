@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Generated only after the student manually runs the experiment.
+result_*.png
+history_*.csv
+results.csv
+
