@@ -5,22 +5,23 @@
 
 ## 手动运行
 
-请先确认当前 Python 环境已经包含实验指南要求的 `torch`、`scikit-learn`、`numpy`
-和 `matplotlib`。本仓库不会自动安装依赖。
+本机已有的 `myenv` 环境包含实验指南要求的 `torch`、`scikit-learn`、`numpy` 和
+`matplotlib`，本仓库不会自动安装依赖。由于当前终端中的 `python` 实际指向
+`C:\python\python.exe`，请显式使用 `myenv` 的解释器。
 
 在本目录的终端中手动运行全部实验：
 
 ```powershell
-python .\mlp_digits.py --experiment all
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment all
 ```
 
 也可以只运行单组实验，例如：
 
 ```powershell
-python .\mlp_digits.py --experiment baseline
-python .\mlp_digits.py --experiment exp1
-python .\mlp_digits.py --experiment failure
-python .\mlp_digits.py --experiment best
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment baseline
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment exp1
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment failure
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment best
 ```
 
 可选实验名称为 `baseline`、`exp1` 至 `exp7`、`failure` 和 `best`。运行后会生成：

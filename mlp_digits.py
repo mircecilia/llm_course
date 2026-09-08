@@ -5,12 +5,13 @@ import csv
 import time
 from dataclasses import dataclass, replace
 
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-import torch.nn as nn
+# 本机 myenv 先加载 sklearn，可避免其与 PyTorch 的 OpenMP 运行库加载冲突。
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
+import torch
+import torch.nn as nn
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
