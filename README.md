@@ -22,9 +22,12 @@
 & 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment exp1
 & 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment failure
 & 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment best
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\mlp_digits.py --experiment lr_scan
 ```
 
-可选实验名称为 `baseline`、`exp1` 至 `exp7`、`failure` 和 `best`。运行后会生成：
+可选实验名称为 `baseline`、`exp1` 至 `exp7`、`failure`、`best` 和 `lr_scan`。
+`lr_scan` 使用基线模型扫描学习率 0.1、1.0、5.0、10.0 和 20.0，用于判断发散临界点。
+运行后会生成：
 
 - `result_*.png`：每组的训练损失和测试准确率曲线；
 - `history_*.csv`：每个 epoch 的训练损失与测试准确率；

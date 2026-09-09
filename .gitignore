@@ -7,3 +7,5 @@ venv/
 result_*.png
 history_*.csv
 results.csv
+lr_scan_results.csv
+best_runs_results.csv

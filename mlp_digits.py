@@ -19,6 +19,7 @@ plt.rcParams["axes.unicode_minus"] = False
 
 DATA_SPLIT_SEED = 42
 BEST_MODEL_SEEDS = (42, 43, 44)
+LR_SCAN_VALUES = (0.1, 1.0, 5.0, 10.0, 20.0)
 
 
 @dataclass(frozen=True)
@@ -287,12 +288,22 @@ def run_best_three_times(
     histories = []
     elapsed_times = []
     final_accuracies = []
+    run_rows = []
 
     for run_number, seed in enumerate(BEST_MODEL_SEEDS, start=1):
         history, elapsed = train(experiment, seed, data)
         histories.append(history)
         elapsed_times.append(elapsed)
-        final_accuracies.append(history["accuracy"][-1] * 100)
+        final_accuracy = history["accuracy"][-1] * 100
+        final_accuracies.append(final_accuracy)
+        run_rows.append(
+            {
+                "run": run_number,
+                "seed": seed,
+                "accuracy_percent": final_accuracy,
+                "training_seconds": elapsed,
+            }
+        )
 
         run_experiment = replace(
             experiment,
@@ -301,6 +312,15 @@ def run_best_three_times(
         )
         save_history(run_experiment.filename, history)
         save_curves(run_experiment, history)
+        print(
+            f"最优组合第 {run_number} 次（种子 {seed}）: "
+            f"测试准确率 {final_accuracy:.2f}%, 训练耗时 {elapsed:.3f}s"
+        )
+
+    with open("best_runs_results.csv", "w", newline="", encoding="utf-8-sig") as file:
+        writer = csv.DictWriter(file, fieldnames=list(run_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(run_rows)
 
     mean_history = {
         "loss": np.mean([history["loss"] for history in histories], axis=0).tolist(),
@@ -363,18 +383,77 @@ def save_comparison(rows: list[dict[str, str | float]]) -> None:
     plt.close(figure)
 
 
+def run_learning_rate_scan(
+    data: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+) -> None:
+    rows = []
+    histories = []
+
+    for learning_rate in LR_SCAN_VALUES:
+        experiment = replace(BASELINE, learning_rate=learning_rate)
+        history, elapsed = train(experiment, DATA_SPLIT_SEED, data)
+        histories.append((learning_rate, history))
+        losses = history["loss"]
+        accuracy = history["accuracy"][-1] * 100
+        rows.append(
+            {
+                "learning_rate": learning_rate,
+                "final_accuracy_percent": accuracy,
+                "final_loss": losses[-1],
+                "minimum_loss": min(losses),
+                "maximum_loss": max(losses),
+                "training_seconds": elapsed,
+            }
+        )
+        save_history(str(learning_rate).replace(".", "p"), history)
+        print(
+            f"学习率 {learning_rate:g}: 测试准确率 {accuracy:.2f}%, "
+            f"最终损失 {losses[-1]:.4f}, 损失范围 "
+            f"[{min(losses):.4f}, {max(losses):.4f}]"
+        )
+
+    with open("lr_scan_results.csv", "w", newline="", encoding="utf-8-sig") as file:
+        writer = csv.DictWriter(file, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    epochs = range(1, BASELINE.epochs + 1)
+    figure, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+    for learning_rate, history in histories:
+        label = f"lr={learning_rate:g}"
+        axes[0].plot(epochs, history["loss"], label=label)
+        axes[1].plot(epochs, np.array(history["accuracy"]) * 100, label=label)
+
+    axes[0].set_title("不同学习率的训练损失")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("交叉熵损失")
+    axes[0].grid(alpha=0.25)
+    axes[0].legend()
+    axes[1].set_title("不同学习率的测试准确率")
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("测试准确率 (%)")
+    axes[1].grid(alpha=0.25)
+    axes[1].legend()
+    figure.suptitle("基线模型学习率扫描")
+    figure.tight_layout()
+    figure.savefig("result_lr_scan.png", dpi=160, bbox_inches="tight")
+    plt.close(figure)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="运行作业一 MLP 控制变量实验")
     parser.add_argument(
         "--experiment",
-        choices=["all", *EXPERIMENTS.keys()],
+        choices=["all", "lr_scan", *EXPERIMENTS.keys()],
         default="all",
         help="选择单组实验；all 会依次运行全部实验",
     )
     args = parser.parse_args()
     data = load_data()
 
-    if args.experiment == "all":
+    if args.experiment == "lr_scan":
+        run_learning_rate_scan(data)
+    elif args.experiment == "all":
         rows = [
             run_once(EXPERIMENTS[key], DATA_SPLIT_SEED, data)
             for key in ("baseline", "exp1", "exp2", "exp3", "exp4", "exp5", "exp6", "exp7")
@@ -384,7 +463,7 @@ def main() -> None:
         save_results(rows)
         save_comparison(rows)
     elif args.experiment == "best":
-        save_results([run_best_three_times(data)])
+        run_best_three_times(data)
     else:
         save_results(
             [run_once(EXPERIMENTS[args.experiment], DATA_SPLIT_SEED, data)]
