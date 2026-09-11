@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 venv/
 tmp/
-~$*.docx
+*.docx
 
 # 课程资料与未填写的模板不纳入作业代码仓库。
 Lesson*.pdf
