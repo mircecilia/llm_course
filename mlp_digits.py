@@ -1,4 +1,8 @@
-"""作业一：在 sklearn digits 数据集上进行 MLP 控制变量实验。"""
+"""作业一：在 sklearn digits 数据集上进行 MLP 控制变量实验。
+
+脚本固定使用 CPU 和全批量训练，支持单组实验、全部对照实验、最优组合复测以及
+学习率扫描。所有图表和 CSV 均生成在当前工作目录。
+"""
 
 import argparse
 import csv
@@ -22,6 +26,7 @@ BEST_MODEL_SEEDS = (42, 43, 44)
 LR_SCAN_VALUES = (0.1, 1.0, 5.0, 10.0, 20.0)
 
 
+# ============================== 实验配置 ==============================
 @dataclass(frozen=True)
 class Experiment:
     group: str
@@ -126,6 +131,7 @@ EXPERIMENTS = {
 }
 
 
+# ============================== 模型结构 ==============================
 class MLP(nn.Module):
     def __init__(
         self,
@@ -159,7 +165,9 @@ class MLP(nn.Module):
         return self.network(inputs)
 
 
+# ============================ 数据与训练流程 ============================
 def load_data() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """加载并归一化数据，所有实验共用种子42的分层划分。"""
     features, labels = load_digits(return_X_y=True)
     features = features.astype(np.float32) / 16.0
     x_train, x_test, y_train, y_test = train_test_split(
@@ -182,6 +190,7 @@ def train(
     seed: int,
     data: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
 ) -> tuple[dict[str, list[float]], float]:
+    """完成一组全批量训练，返回逐轮指标和训练耗时。"""
     np.random.seed(seed)
     torch.manual_seed(seed)
 
@@ -210,12 +219,14 @@ def train(
     start_time = time.perf_counter()
 
     for _ in range(experiment.epochs):
+        # 训练阶段：前向传播、交叉熵损失、反向传播和参数更新。
         model.train()
         optimizer.zero_grad()
         loss = loss_function(model(x_train), y_train)
         loss.backward()
         optimizer.step()
 
+        # 评估阶段不计算梯度，每轮记录测试集准确率。
         model.eval()
         with torch.no_grad():
             predictions = model(x_test).argmax(dim=1)
@@ -226,6 +237,7 @@ def train(
     return history, time.perf_counter() - start_time
 
 
+# ============================== 结果保存 ==============================
 def save_history(filename: str, history: dict[str, list[float]]) -> None:
     with open(f"history_{filename}.csv", "w", newline="", encoding="utf-8-sig") as file:
         writer = csv.writer(file)
@@ -383,6 +395,7 @@ def save_comparison(rows: list[dict[str, str | float]]) -> None:
     plt.close(figure)
 
 
+# ============================== 扩展实验 ==============================
 def run_learning_rate_scan(
     data: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
 ) -> None:
@@ -440,6 +453,7 @@ def run_learning_rate_scan(
     plt.close(figure)
 
 
+# ============================== 命令入口 ==============================
 def main() -> None:
     parser = argparse.ArgumentParser(description="运行作业一 MLP 控制变量实验")
     parser.add_argument(

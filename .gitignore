@@ -2,8 +2,16 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+tmp/
+~$*.docx
 
-# Generated only after the student manually runs the experiment.
+# 课程资料与未填写的模板不纳入作业代码仓库。
+Lesson*.pdf
+ch*.pdf
+作业一_*.pdf
+作业一_实验报告样板.docx
+
+# 实验运行后生成，可通过脚本重新复现。
 result_*.png
 history_*.csv
 results.csv
