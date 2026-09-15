@@ -10,6 +10,7 @@ Lesson*.pdf
 ch*.pdf
 作业一_*.pdf
 作业一_实验报告样板.docx
+作业二_*.pdf
 
 # 实验运行后生成，可通过脚本重新复现。
 result_*.png
