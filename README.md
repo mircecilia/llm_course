@@ -11,6 +11,7 @@ BatchNorm，并包含学习率发散实验与最优组合三次复测。
 
 - `mlp_digits.py`：全部模型、训练、评估和绘图代码；
 - `convlstm_bounce.ipynb`：实验二 ConvLSTM 弹跳小球预测、对照实验与可视化；
+- `convlstm_extra_multiball.ipynb`：实验二创新加分，双球时空预测扩展；
 - `复现说明.md`：环境要求、运行命令、输出文件和参考结果。
 
 ## 快速开始
