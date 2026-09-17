@@ -1,11 +1,6 @@
-# 大模型课程作业一
+# 大模型课程作业
 
-本仓库使用 PyTorch 在 `sklearn.datasets.load_digits` 数据集上实现多层感知器分类，
-通过控制变量比较激活函数、网络深度、优化器、学习率、L2 正则化、Dropout 和
-BatchNorm，并包含学习率发散实验与最优组合三次复测。
-
-实验仅使用 CPU，数据集由 scikit-learn 内置提供，不需要联网下载数据，也没有调用
-`sklearn.neural_network.MLPClassifier` 代替 PyTorch 训练流程。
+本仓库为大模型全部课程实验的代码仓库，仓库内容如下
 
 ## 仓库内容
 
