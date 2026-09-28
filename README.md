@@ -24,7 +24,7 @@ python .\mlp_digits.py --experiment all
 实验三完整运行：
 
 ```powershell
-python .\hw3_min_llm\min_llm.py --suite
+python .\min_llm.py --suite
 ```
 
 实验三会使用 CPU 和指南内置语料，产物单独保存到 `lab03_outputs/`，不会覆盖前两次实验。
