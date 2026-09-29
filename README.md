@@ -7,8 +7,10 @@
 - `mlp_digits.py`：全部模型、训练、评估和绘图代码；
 - `convlstm_bounce.ipynb`：实验二 ConvLSTM 弹跳小球预测、对照实验与可视化；
 - `convlstm_extra_multiball.ipynb`：实验二创新加分，双球时空预测扩展；
-- `hw3_min_llm/min_llm.py`：实验三字符级最小 GPT、控制变量实验、采样与重复惩罚；
+- `min_llm.py`：实验三字符级最小 GPT、控制变量实验、采样与重复惩罚；
 - `min_llm_experiments.ipynb`：实验三完整实验总览与报告数据索引；
+- `hw4_rag.py`：实验四三种 RAG 检索、20 题评测、K 扫描与 RRF 选做；
+- `hw4_rag_experiments.ipynb`：实验四可运行总览及报告数据索引；
 - `复现说明.md`：环境要求、运行命令、输出文件和参考结果。
 
 ## 快速开始
@@ -28,3 +30,11 @@ python .\min_llm.py --suite
 ```
 
 实验三会使用 CPU 和指南内置语料，产物单独保存到 `lab03_outputs/`，不会覆盖前两次实验。
+
+实验四在已准备好本地嵌入模型的 `myenv` 中运行：
+
+```powershell
+& 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\hw4_rag.py --mode all
+```
+
+实验四产物写入独立的 `lab04_outputs/`；模型与依赖的安装、报告填写索引见[复现说明](复现说明.md)。不使用 LLM API，不修改实验报告。
