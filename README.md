@@ -10,6 +10,7 @@
 - `min_llm.py`：实验三字符级最小 GPT、控制变量实验、采样与重复惩罚；
 - `min_llm_experiments.ipynb`：实验三完整实验总览与报告数据索引；
 - `hw4_rag.py`：实验四三种 RAG 检索、20 题评测、K 扫描与 RRF 选做；
+- `hw4_rag_api.py`：实验四真实 API 抽取、提示词迭代、九个回答与独立补充评测；
 - `hw4_rag_experiments.ipynb`：实验四可运行总览及报告数据索引；
 - `复现说明.md`：环境要求、运行命令、输出文件和参考结果。
 
@@ -37,4 +38,4 @@ python .\min_llm.py --suite
 & 'C:\Users\Cecilia\.conda\envs\myenv\python.exe' .\hw4_rag.py --mode all
 ```
 
-实验四产物写入独立的 `lab04_outputs/`；模型与依赖的安装、报告填写索引见[复现说明](复现说明.md)。不使用 LLM API，不修改实验报告。
+实验四主检索产物写入 `lab04_outputs/`；API 补充另存 `lab04_outputs/api_20261005/`，不替换固定 40 条图谱、9 个条目和原检索指标。密钥仅通过环境变量读取，不提交报告或凭据。运行命令见[复现说明](复现说明.md)。

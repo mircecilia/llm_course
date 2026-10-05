@@ -10,6 +10,8 @@ import textwrap
 from collections import defaultdict, deque
 from pathlib import Path
 
+from hw4_rag_api import ANSWER_PROMPT, llm_chat
+
 import sklearn  # 在本机环境中先加载 sklearn，避免 OpenMP 运行库冲突
 import matplotlib
 import matplotlib.pyplot as plt
@@ -67,7 +69,7 @@ QUESTIONS = [
     ("Q20", "global", "概述云山大学的所在地、春季开学日期和地铁到校方式。", ["doc01", "doc12", "doc14"]),
 ]
 
-# 指南的 40 条预抽取三元组；没有 LLM API，不把它们说成现场抽取。
+# 主检索基线固定使用指南40条三元组；真实API抽取另存补充实验，不能混称同一套图。
 TRIPLES = [
     ("李文瀚", "任职于", "人工智能学院", "doc04"), ("李文瀚", "职称", "教授", "doc04"),
     ("李文瀚", "入职年份", "2019 年", "doc04"), ("李文瀚", "研究方向", "检索增强生成", "doc04"),
@@ -482,6 +484,7 @@ def main():
     parser.add_argument("--q", default="Q01")
     parser.add_argument("--scope", choices=["local", "global"], default="local")
     parser.add_argument("--k", type=int, default=5)
+    parser.add_argument("--generate", action="store_true", help="用环境变量中的 API 对当前检索原文生成回答")
     parser.add_argument("--mrr_check", help="例如 3,1,2，输出手算式")
     args = parser.parse_args()
     if args.mrr_check:
@@ -490,6 +493,8 @@ def main():
               f"{sum(1 / r for r in ranks) / len(ranks):.4f}")
         return
     if args.mode == "all":
+        if args.generate:
+            parser.error("--generate 请搭配 vector、graph、wiki 或 hybrid 单题模式")
         run_all()
         return
     emb = Embedder()
@@ -503,6 +508,10 @@ def main():
         print(f"{i}. {doc}  score={similarity:.4f}  命中={doc in evidence}  线索={detail}\n   原文：{CORPUS[doc]}")
     got = {d for d, _, _ in hits[:args.k]}
     print(f"Recall@{args.k}={len(got & set(evidence)) / len(evidence):.3f}")
+    if args.generate:
+        context = "\n\n".join(f"[{doc}] {CORPUS[doc]}" for doc, _, _ in hits[:args.k])
+        result = llm_chat(ANSWER_PROMPT.format(q=q, ctx=context), temperature=0)
+        print(f"LLM（{result['model']}）真实回答：{result['raw_output']}")
 
 
 if __name__ == "__main__":
