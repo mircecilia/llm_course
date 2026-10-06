@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""作业四 API 补充实验；复用原始检索记录，不改动主基线。
+"""作业四第二层：LLM 自动知识构建与生成；复用固定基准的检索记录。
 
 凭据只读环境变量 LLM_API_KEY。默认结果另存；已完成调用直接复用，避免重复计费。
 不依赖新增软件，使用 Python 标准库连接 DeepSeek 官方接口。
@@ -14,7 +14,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+CODE_DIR = Path(__file__).resolve().parent
+ROOT = CODE_DIR.parent
 BASELINE = ROOT / "lab04_outputs"
 DEFAULT_OUT = BASELINE / "api_20261005"
 
@@ -39,7 +40,7 @@ ANSWER_PROMPT = ('你是问答助手。只依据下面资料回答问题；资�
 
 def source_constants():
     """直接读取原脚本常量，既不加载 embedding，也不运行旧结果写入函数。"""
-    tree = ast.parse((ROOT / "hw4_rag.py").read_text(encoding="utf-8-sig"))
+    tree = ast.parse((CODE_DIR / "hw4_rag.py").read_text(encoding="utf-8-sig"))
     names = {"CORPUS", "QUESTIONS", "TRIPLES", "ENTRIES"}
     values = {}
     for node in tree.body:

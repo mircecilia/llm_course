@@ -3,7 +3,8 @@ from pathlib import Path
 import ast
 import os
 
-ROOT = Path(__file__).resolve().parent
+CODE_DIR = Path(__file__).resolve().parent
+ROOT = CODE_DIR.parent
 CACHE = ROOT / 'tmp' / 'wiki_plot_cache'
 CACHE.mkdir(parents=True, exist_ok=True)
 os.environ['MPLCONFIGDIR'] = str(CACHE)
@@ -17,7 +18,7 @@ from matplotlib.patches import Rectangle
 
 def main():
     # 从源码读取常量，避免 import hw4_rag 时触发实验依赖。
-    tree = ast.parse((ROOT / 'hw4_rag.py').read_text(encoding='utf-8'))
+    tree = ast.parse((CODE_DIR / 'hw4_rag.py').read_text(encoding='utf-8'))
     entries = next(ast.literal_eval(n.value) for n in tree.body
                    if isinstance(n, ast.Assign)
                    and any(isinstance(t, ast.Name) and t.id == 'ENTRIES' for t in n.targets))

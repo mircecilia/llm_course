@@ -23,7 +23,7 @@ import sentence_transformers
 from sentence_transformers import SentenceTransformer
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "lab04_outputs"
 MODEL = "BAAI/bge-small-zh-v1.5"
 

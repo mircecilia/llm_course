@@ -1,13 +1,14 @@
 """作业一：在 sklearn digits 数据集上进行 MLP 控制变量实验。
 
 脚本固定使用 CPU 和全批量训练，支持单组实验、全部对照实验、最优组合复测以及
-学习率扫描。所有图表和 CSV 均生成在当前工作目录。
+学习率扫描。所有图表和 CSV 均生成在仓库根目录的 lab01_outputs/。
 """
 
 import argparse
 import csv
 import time
 from dataclasses import dataclass, replace
+from pathlib import Path
 
 # 本机 myenv 先加载 sklearn，可避免其与 PyTorch 的 OpenMP 运行库加载冲突。
 from sklearn.datasets import load_digits
@@ -24,6 +25,7 @@ plt.rcParams["axes.unicode_minus"] = False
 DATA_SPLIT_SEED = 42
 BEST_MODEL_SEEDS = (42, 43, 44)
 LR_SCAN_VALUES = (0.1, 1.0, 5.0, 10.0, 20.0)
+OUTPUT_DIR = Path(__file__).resolve().parent.parent / "lab01_outputs"
 
 
 # ============================== 实验配置 ==============================
@@ -239,7 +241,7 @@ def train(
 
 # ============================== 结果保存 ==============================
 def save_history(filename: str, history: dict[str, list[float]]) -> None:
-    with open(f"history_{filename}.csv", "w", newline="", encoding="utf-8-sig") as file:
+    with open(OUTPUT_DIR / f"history_{filename}.csv", "w", newline="", encoding="utf-8-sig") as file:
         writer = csv.writer(file)
         writer.writerow(["epoch", "training_loss", "test_accuracy"])
         for epoch, (loss, accuracy) in enumerate(
@@ -265,7 +267,7 @@ def save_curves(experiment: Experiment, history: dict[str, list[float]]) -> None
 
     figure.suptitle(f"组 {experiment.group}：{experiment.name}")
     figure.tight_layout()
-    figure.savefig(f"result_{experiment.filename}.png", dpi=160, bbox_inches="tight")
+    figure.savefig(OUTPUT_DIR / f"result_{experiment.filename}.png", dpi=160, bbox_inches="tight")
     plt.close(figure)
 
 
@@ -329,7 +331,7 @@ def run_best_three_times(
             f"测试准确率 {final_accuracy:.2f}%, 训练耗时 {elapsed:.3f}s"
         )
 
-    with open("best_runs_results.csv", "w", newline="", encoding="utf-8-sig") as file:
+    with open(OUTPUT_DIR / "best_runs_results.csv", "w", newline="", encoding="utf-8-sig") as file:
         writer = csv.DictWriter(file, fieldnames=list(run_rows[0].keys()))
         writer.writeheader()
         writer.writerows(run_rows)
@@ -362,7 +364,7 @@ def run_best_three_times(
 
 
 def save_results(rows: list[dict[str, str | float]]) -> None:
-    with open("results.csv", "w", newline="", encoding="utf-8-sig") as file:
+    with open(OUTPUT_DIR / "results.csv", "w", newline="", encoding="utf-8-sig") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
@@ -391,7 +393,7 @@ def save_comparison(rows: list[dict[str, str | float]]) -> None:
 
     figure.suptitle("基线、单项改进与最优组合结果对比")
     figure.tight_layout()
-    figure.savefig("result_summary.png", dpi=160, bbox_inches="tight")
+    figure.savefig(OUTPUT_DIR / "result_summary.png", dpi=160, bbox_inches="tight")
     plt.close(figure)
 
 
@@ -425,7 +427,7 @@ def run_learning_rate_scan(
             f"[{min(losses):.4f}, {max(losses):.4f}]"
         )
 
-    with open("lr_scan_results.csv", "w", newline="", encoding="utf-8-sig") as file:
+    with open(OUTPUT_DIR / "lr_scan_results.csv", "w", newline="", encoding="utf-8-sig") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
@@ -449,7 +451,7 @@ def run_learning_rate_scan(
     axes[1].legend()
     figure.suptitle("基线模型学习率扫描")
     figure.tight_layout()
-    figure.savefig("result_lr_scan.png", dpi=160, bbox_inches="tight")
+    figure.savefig(OUTPUT_DIR / "result_lr_scan.png", dpi=160, bbox_inches="tight")
     plt.close(figure)
 
 
@@ -463,6 +465,7 @@ def main() -> None:
         help="选择单组实验；all 会依次运行全部实验",
     )
     args = parser.parse_args()
+    OUTPUT_DIR.mkdir(exist_ok=True)
     data = load_data()
 
     if args.experiment == "lr_scan":

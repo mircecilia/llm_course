@@ -1,29 +1,28 @@
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-tmp/
-*.docx
+# 只跟踪复现说明和四个实验的关键程序；本地资料、结果、密钥一律不纳入 Git。
+/*
+!/.gitignore
+!/README.md
+!/复现说明.md
+!/lab01_mlp/
+!/lab02_convlstm/
+!/lab03_min_llm/
+!/lab04_rag/
 
-# 课程资料与未填写的模板不纳入作业代码仓库。
-Lesson*.pdf
-ch*.pdf
-作业一_*.pdf
-作业一_实验报告样板.docx
-作业二_*.pdf
-作业三_*.pdf
-作业四_*.pdf
+/lab01_mlp/*
+!/lab01_mlp/mlp_digits.py
 
-# 实验运行后生成，可通过脚本重新复现。
-result_*.png
-history_*.csv
-results.csv
-lr_scan_results.csv
-best_runs_results.csv
-lab03_outputs/
-lab04_outputs/
+/lab02_convlstm/*
+!/lab02_convlstm/convlstm_bounce.ipynb
+!/lab02_convlstm/convlstm_extra_multiball.ipynb
 
-# 本地 API 凭据，不进入代码仓库。
-api.txt
-.env
-.env.*
+/lab03_min_llm/*
+!/lab03_min_llm/min_llm.py
+!/lab03_min_llm/min_llm_experiments.ipynb
+
+/lab04_rag/*
+!/lab04_rag/hw4_rag.py
+!/lab04_rag/hw4_rag_api.py
+!/lab04_rag/hw4_rag_experiments.ipynb
+!/lab04_rag/hw4_wiki_figure.py
+
+# 新增关键程序时显式加入白名单；不要对整个目录强制 git add -f。
