@@ -1,4 +1,4 @@
-# 只跟踪复现说明和四个实验的关键程序；本地资料、结果、密钥一律不纳入 Git。
+# 只跟踪复现说明和实验关键程序；本地资料、结果、密钥一律不纳入 Git。
 /*
 !/.gitignore
 !/README.md
@@ -7,6 +7,7 @@
 !/lab02_convlstm/
 !/lab03_min_llm/
 !/lab04_rag/
+!/lab05_smolvlm/
 
 /lab01_mlp/*
 !/lab01_mlp/mlp_digits.py
@@ -24,5 +25,13 @@
 !/lab04_rag/hw4_rag_api.py
 !/lab04_rag/hw4_rag_experiments.ipynb
 !/lab04_rag/hw4_wiki_figure.py
+
+/lab05_smolvlm/*
+!/lab05_smolvlm/hw5_dpo.py
+!/lab05_smolvlm/audit_results.py
+!/lab05_smolvlm/hw5_experiments.ipynb
+!/lab05_smolvlm/protocol.json
+!/lab05_smolvlm/run_all.sh
+!/lab05_smolvlm/README.md
 
 # 新增关键程序时显式加入白名单；不要对整个目录强制 git add -f。

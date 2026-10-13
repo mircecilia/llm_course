@@ -1,6 +1,6 @@
 # 大模型课程作业
 
-四个 CPU 实验的关键程序与[复现说明](复现说明.md)。Git 只保留源码、未执行的 Notebook 和运行指南，不包含实验结果、下载数据、模型权重、缓存、报告或 API 凭据。
+前四个 CPU 实验及实验五 GPU 实验的关键程序与[复现说明](复现说明.md)。Git 只保留源码、未执行的 Notebook 和运行指南，不包含实验结果、下载数据、模型权重、缓存、报告或 API 凭据。
 
 ## 目录
 
@@ -18,6 +18,13 @@ lab04_rag/
 ├── hw4_rag_api.py                 # LLM 知识构建、生成与变体评测
 ├── hw4_rag_experiments.ipynb       # 两层实验总览
 └── hw4_wiki_figure.py              # 固定 Wiki 条目的紧凑布局绘图
+lab05_smolvlm/
+├── hw5_dpo.py                     # NF4 QLoRA、手写 DPO、三阶段评测
+├── audit_results.py               # 逐题、训练步数、DPO 公式及公平性核验
+├── hw5_experiments.ipynb           # 分步运行和真实结果读取
+├── protocol.json                  # 训练前固定的实验口径
+├── run_all.sh                     # 两卡并行独立 DPO 对照
+└── README.md                      # 远端隔离环境与复现步骤
 README.md
 复现说明.md
 .gitignore
@@ -42,6 +49,8 @@ python .\lab04_rag\hw4_rag.py --mode all
 ```
 
 实验二使用对应 Notebook，在已准备好依赖的 Jupyter 内核中按顺序执行。实验四第二层需要自行配置 API 环境变量，会产生网络请求和费用；全部命令及运行顺序见[复现说明](复现说明.md)。不要盲目整本运行 Notebook 或覆盖已有结果。
+
+实验五在远端新建目录和独立环境中运行，不使用本机 base。完整命令与结果文件说明见 [实验五复现指南](lab05_smolvlm/README.md)。
 
 ## 本地文件与 Git
 

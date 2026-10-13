@@ -1,0 +1,40 @@
+{
+  "model_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+  "seed": 42,
+  "images": "指南原始 IMG_SPEC、random.Random(42)、256x256 白底轮廓图；保持随机重叠",
+  "questions": "指南 P01-P15 原题和 gold；同题回测，不是独立测试集",
+  "sft": {"steps": 60, "lr": 0.0001, "batch_size": 1, "r": 8, "alpha": 16, "dropout": 0.05},
+  "dpo": {"steps": 40, "lr": 0.00005, "batch_size": 1, "beta": 0.1, "dropout": 0.0},
+  "optimizer": "PagedAdamW32bit, weight_decay=0.01, max_grad_norm=1.0",
+  "training_quantization": "NF4 4-bit base, float32 compute, only LoRA trainable",
+  "reference": "冻结的 NF4 基座，disable_adapter + torch.no_grad；不是冻结的 SFT 模型",
+  "evaluation": "所有阶段统一重新加载 fp32 基座，greedy, max_new_tokens=24，独立加载单个适配器",
+  "primary_scoring": "固定中英文宽松语义匹配；计数需唯一数字，形状需不矛盾，存在性先识别否定",
+  "secondary_scoring": "另存指南原始子串规则结果，用于揭示否定子串误判，不替代主指标",
+  "sequence_logprob": "答案 token 的总 log-probability，包含结束 token；不计 prompt 和图像 token",
+  "required_runs": ["baseline", "sft", "dpo12", "dpo17"],
+  "optional_task": "任务五(a)，beta 敏感性扫描；不另外开展 r 扫描",
+  "beta_scan": [0.05, 0.1, 0.5],
+  "beta_scan_pairs": 17,
+  "beta_scan_start": "同一个 sft/adapter，各 beta 独立重置 seed=42、数据顺序、40 步预算",
+  "beta_0.1_reuse": "dpo17 即 beta=0.1，避免重复运行改变统计口径",
+  "memory_revision": "初次 dpo12/dpo17 在第1优化步之前 OOM，保留失败目录；所有 DPO 改用非重入梯度检查点、train 模式并显式关闭 Dropout，重跑命名 dpo12_gc/dpo17_gc。公式、数据、学习率、种子、beta 和步数不变。",
+  "posthoc_precision_diagnostic": {
+    "reason": "FP32 三阶段完成后发现部分短回答退化；检查从 NF4 训练切换到 FP32 基座评测的影响",
+    "stages": ["baseline", "sft", "dpo12_gc", "dpo17_gc", "beta005", "beta05"],
+    "extension_reason": "先核验 baseline/sft/dpo17_gc 后观察到显著精度切换差异，故扩展到全部已训练模型，避免只挑选有利阶段；不重训或更换主指标",
+    "evaluation_quantization": "nf4, float32 compute",
+    "questions": "相同 P01-P15 与 E01-E05，不换题、不换 gold、不改判分或解码参数",
+    "output": "evaluations_nf4；只作诊断，不替换或覆盖先前冻结的 FP32 主结果",
+    "training": "不重新训练，不修改任何适配器"
+  },
+  "extra_pairs": 5,
+  "human_review": "提供九条真实回答和图像供复核；AI 建议评分与本人最终评分分列",
+  "guide_corrections": [
+    "修正原参考代码 epochs 上限导致默认 SFT60/DPO40 实际跑不满的问题",
+    "修正手算函数返回负损失的符号错误；margin=0.01 的真实 loss=0.68815968",
+    "DPO 参考前向加 no_grad，关闭 dropout；保留 NF4 基座，不重复包装已有 LoRA",
+    "每阶段重载基座，避免 eval 中叠加适配器",
+    "训练答案附结束 token；逐 token 验证 prompt 前缀与答案掩码"
+  ]
+}
