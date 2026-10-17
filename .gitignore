@@ -33,5 +33,6 @@
 !/lab05_smolvlm/protocol.json
 !/lab05_smolvlm/run_all.sh
 !/lab05_smolvlm/README.md
+!/lab05_smolvlm/requirements.txt
 
 # 新增关键程序时显式加入白名单；不要对整个目录强制 git add -f。

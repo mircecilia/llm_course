@@ -19,6 +19,18 @@ export HF_HUB_DISABLE_XET=1
 
 关键依赖固定为 torch 2.6.0、torchvision 0.21.0、transformers 4.57.6、peft 0.17.1、accelerate 1.10.1、bitsandbytes 0.48.2、huggingface_hub 0.36.0、NumPy 2.2.6、Pillow 11.3.0、Matplotlib 3.10.7。完整实际版本另存 `outputs/requirements.lock.txt`。模型 commit 在 `models/revision.txt`，训练及评测均离线读取同一模型快照。
 
+`requirements.txt` 只固定上述直接依赖，不冒充完整锁文件。在新的远端实验目录中，先把本目录关键程序、配置与依赖清单复制到 `src/`。仅首次准备环境时执行以下命令（已有 `.venv` 则跳过，不重建）：
+
+```bash
+# 使用已有的 Python 3.10 创建新 venv，不安装到该解释器原来的环境。
+python3.10 -m venv "$LAB05_ROOT/.venv"
+"$LAB05_ROOT/.venv/bin/python" -m pip install \
+  --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+  -r "$LAB05_ROOT/src/requirements.txt"
+```
+
+已验证的模型 revision 为 `7e3e67edbbed1bf9888184d9df282b700a323964`。下载模型时固定此版本，并将完整快照放入 `$LAB05_ROOT/models/SmolVLM-256M-Instruct/`；不把权重提交 Git。
+
 ## 必做与选做
 
 - 基线：P01–P15，count/attr/exist 各 5 题，逐题保存原始回答。
@@ -78,6 +90,7 @@ FP32 主评测结束后，为检查 NF4 训练到 FP32 评测切换的影响，�
 - `environment.json` / `implementation_checks.json`：GPU、依赖版本、NF4、mask、参考模型、梯度符号检查。
 - `sft/`、`dpo12/`、`dpo17/`、`beta005/`、`beta05/`：配置、完整逐步 loss/梯度日志，DPO 另存 margin 和四项序列 log-probability。
 - `evaluations/<stage>/`：逐题原始回答、主判分、指南子串旁列、分类正确率与耗时。
+- `runtime.json` 的 `total_s` 包含模型加载及 20 题（15 道内置 + 5 道自拟）评测、结果写入，不是仅 15 题纯推理时间。逐题 `inference_s` 才是各次回答的计时，两种口径不能混用。
 - `all_metrics.csv`、`accuracy_comparison.png`、`training_curves.png`：真实记录汇总，绘图不另造数据。
 - `dpo_manual_checks.csv`：三组手算复核。margin=0.01 时 loss=0.68815968，指南写的约 0.693 不够精确；原参考手算函数还存在负号错误。
 - `faithfulness_9_review.csv`：baseline/SFT/dpo17 各取 P01、P06、P12。人工评分留空，AI 建议分与人工最终分分列，不把正确率冒充忠实度。
@@ -89,6 +102,14 @@ FP32 主评测结束后，为检查 NF4 训练到 FP32 评测切换的影响，�
 - `scoring_review_notes.csv`：短否定“没。”在两个 E03 回答中被固定规则漏判，另列 CODEX 语义复核意见，不回写冻结指标。因此自动表中自拟题的单题差异也可能是判分覆盖不足，不宜直接当作行为提升。
 
 主判分冻结为中英文宽松语义匹配，先识别存在性否定；多个互相冲突的数字/形状不算正确。原指南的子串规则单独保存，以便解释 `有` 匹配 `没有` 等问题，不混用两套正确率。
+
+## 无 GPU 时的复核与归档
+
+复核已保存结果不需要模型、GPU 或 API。直接对照 `outputs/images/`、各阶段 `predictions.json`、原始训练日志和固定配置即可；不要为填写报告重新训练。九条忠实度评分应同时记录评分依据和评审身份，CODEX 复核意见不能自动填成“本人已人工确认”。无意义片段应单独标注为不可用回答，不能视为高忠实拒答。
+
+`audit_results.py` 不训练、不改原始预测，但会重写汇总 CSV/JSON 和派生图片。需要保留全部旧产物时，先复制结果到新的复核目录，再对副本运行；仅阅读报告时无需执行它。
+
+Git 仅保留本目录的关键 Python、未执行 Notebook、固定配置、运行脚本、直接依赖清单与本说明。不提交输出、模型、环境、报告、用户名或 SSH 地址。远端实验目录及失败日志原位保留，不执行清空或覆盖。
 
 ## 实现依据
 

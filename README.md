@@ -23,6 +23,7 @@ lab05_smolvlm/
 ├── audit_results.py               # 逐题、训练步数、DPO 公式及公平性核验
 ├── hw5_experiments.ipynb           # 分步运行和真实结果读取
 ├── protocol.json                  # 训练前固定的实验口径
+├── requirements.txt               # 已验证的直接依赖版本，不含环境或下载数据
 ├── run_all.sh                     # 两卡并行独立 DPO 对照
 └── README.md                      # 远端隔离环境与复现步骤
 README.md
@@ -54,6 +55,10 @@ python .\lab04_rag\hw4_rag.py --mode all
 
 ## 本地文件与 Git
 
-新结果保存到仓库根目录的 `lab01_outputs/`、`lab02_outputs/`、`lab02_extra_outputs/`、`lab03_outputs/`、`lab04_outputs/`，不纳入 Git。源码中的指南小语料常量和合成数据生成逻辑保留，以便复现；外部数据和运行产物不提交。
+前四次实验的新结果保存到仓库根目录的 `lab01_outputs/`、`lab02_outputs/`、`lab02_extra_outputs/`、`lab03_outputs/`、`lab04_outputs/`。实验五保存到独立远端 `$LAB05_ROOT/outputs/`，本地备份为 `lab05_outputs/`。这些目录都不纳入 Git。源码中的指南小语料常量和合成数据生成逻辑保留，以便复现；外部数据和运行产物不提交。
 
 `.gitignore` 使用关键文件白名单。新增程序须显式补充白名单；不要用 `git add -f` 强制加入结果、报告或密钥。提交前清空 Notebook 输出，避免把图片、日志或真实回答嵌入代码仓库。
+
+仓库按实验编号分为五个源码目录，根目录只跟踪本页、复现说明和 `.gitignore`。本地另存的报告、课程资料、旧结果和临时文件保留原位，不通过删除它们来“清理”Git。未执行 Notebook 不携带训练结果；报告中的人工判断与自动指标应分别核验。
+
+无 GPU 时可以阅读源代码、CSV/JSON 和日志、核对图片与回答；不要启动实验五的训练或完整推理，也不要把 `audit_results.py` 当作纯只读命令，它会重新写入派生汇总和图表。
