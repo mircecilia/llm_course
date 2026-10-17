@@ -111,6 +111,10 @@ FP32 主评测结束后，为检查 NF4 训练到 FP32 评测切换的影响，�
 
 Git 仅保留本目录的关键 Python、未执行 Notebook、固定配置、运行脚本、直接依赖清单与本说明。不提交输出、模型、环境、报告、用户名或 SSH 地址。远端实验目录及失败日志原位保留，不执行清空或覆盖。
 
+从远端归档到本机时，取回 `src/`、`logs/`、完整 `outputs/`（包括适配器）及 `models/revision.txt`，另存为仓库根目录的 `lab05_remote_backup_<日期>/`。环境、下载缓存和基座权重不混入源码归档。逐文件核对 SHA-256，保留本机早期副本；历史源码供追溯，当前复现入口仍以 Git 中本目录为准。
+
+本机复核使用已有环境即可。需要复算数字和派生图时，先复制备份的 `outputs/` 到新的临时目录，再执行 `audit_results.py --outputs <临时目录>`。这一步只核对已保存记录，不进行训练或推理；核验结果不能代替使用者对原始回答的最终判断。
+
 ## 实现依据
 
 模型加载方式参考 [SmolVLM 官方模型卡](https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct)。量化基座和 LoRA 训练参考 [PEFT 量化文档](https://huggingface.co/docs/peft/developer_guides/quantization)。DPO 损失及参考策略关系参考 [DPO 原论文](https://arxiv.org/abs/2305.18290)。课程要求的参考模型为禁用适配器的基座，按指南实现，不换成冻结 SFT 模型。
