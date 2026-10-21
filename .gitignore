@@ -43,6 +43,8 @@
 !/lab06_rsi/protocol.json
 !/lab06_rsi/requirements.txt
 !/lab06_rsi/run_all.sh
+!/lab06_rsi/run_extended.sh
+!/lab06_rsi/run_feedback_probes.sh
 !/lab06_rsi/README.md
 !/lab06_rsi/hw6_experiments.ipynb
 

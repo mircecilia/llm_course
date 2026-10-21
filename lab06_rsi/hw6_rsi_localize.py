@@ -379,7 +379,18 @@ def correct(args, processor, model, qs, direct, stage, self_check=False, round_i
                 needs_tool = True
             if needs_tool:
                 stats["tool_calls"] += 1
-                current, gen = answer(processor, model, im, q["q"], hint=msg)
+                feedback_image = im
+                if q["type"] == "loc" and args.tool_context == "candidate":
+                    # 只回传模型刚才的候选，不使用 q['cell'] 或 GT 正确坐标。
+                    if cell is not None:
+                        candidate = cell_text(*cell)
+                        tool_overlay = folder/"overlays"/(q["id"]+"_tool.png")
+                        feedback_image = overlay(im, cell, args.grid, tool_overlay)
+                        rec["tool_overlay"] = str(tool_overlay.relative_to(args.out))
+                        msg = f"你刚才给出的位置是{candidate}，图中紫色框标出了这个候选格。工具检查结果：{msg}。请根据图像重新检查并回答位置。"
+                    else:
+                        msg = f"你刚才的回答是“{current}”，无法解析为坐标。{msg}"
+                current, gen = answer(processor, model, feedback_image, q["q"], hint=msg)
                 rec.update(pred2_tool=current, hint=msg, tool_generation=gen, path="tool")
                 stats["tool_fixed"] += judge(q, current, args.grid)
             rec["final"] = current
@@ -441,7 +452,8 @@ def train_phase(args, processor, model, pool, phase, optimizer, new_count=0, rou
     history = []
     torch.cuda.reset_peak_memory_stats() if torch.cuda.is_available() else None
     started = time.perf_counter()
-    for step in range(args.steps):
+    phase_steps = args.seed_steps if round_idx == 0 else args.rsi_steps
+    for step in range(phase_steps):
         idx = order[step % len(order)]
         sample = pool[idx]
         q = {"img": sample["img"]}
@@ -458,7 +470,7 @@ def train_phase(args, processor, model, pool, phase, optimizer, new_count=0, rou
                    supervised_tokens=int(batch["labels"].ne(-100).sum()))
         history.append(rec)
         write_csv(folder/"history.csv", history)
-        print(f"[{phase}] step={step+1}/{args.steps} loss={rec['loss']:.6f} pool_index={idx} source={sample['source']}", flush=True)
+        print(f"[{phase}] step={step+1}/{phase_steps} loss={rec['loss']:.6f} pool_index={idx} source={sample['source']}", flush=True)
     model.save_pretrained(folder/"adapter")
     elapsed = time.perf_counter()-started
     summary = dict(phase=phase, steps=len(history), seconds=elapsed, pool_size=len(pool),
@@ -553,7 +565,8 @@ def full_run(args):
     write_json(args.out/"pool_round0.json", pool)
     write_json(args.out/"sft_data.json", pool)
     config = read_json(Path(__file__).with_name("protocol.json"))
-    config.update(grid=args.grid, actual_seed_steps=args.steps, actual_rounds=args.rounds,
+    config.update(grid=args.grid, actual_seed_steps=args.seed_steps, actual_round_steps=args.rsi_steps,
+                  actual_rounds=args.rounds, run_name=args.run_name, tool_feedback=args.tool_context,
                   model_path=str(args.model), data_manifest_sha256=sha_file(args.root/"hw6_imgs"/"manifest.json"),
                   model_weights_sha256=sha_file(Path(args.model)/"model.safetensors"),
                   source_sha256=sha_file(__file__))
@@ -572,7 +585,7 @@ def full_run(args):
     rsi_loop(args, processor, model, qs, pool)
     summarize(args)
     write_json(args.out/"completion.json", dict(status="complete", seconds=time.perf_counter()-started,
-                                               optimizer_steps=args.steps*(args.rounds+1)))
+                                               optimizer_steps=args.seed_steps+args.rsi_steps*args.rounds))
     print("RUN_COMPLETE", args.out, flush=True)
 
 
@@ -632,18 +645,56 @@ def model_check(args):
     print("MODEL_CHECK_PASSED", json.dumps(result, ensure_ascii=False), flush=True)
 
 
+def feedback_probe(args):
+    """固定已训 SFT 权重比较反馈上下文；不训练、不修改源实验。"""
+    source = args.root/"outputs"/args.source_run/f"grid{args.grid}"
+    args.out.mkdir(parents=True, exist_ok=False)
+    qs = read_json(source/"questions.json")
+    original = read_json(source/"sft_eval"/"predictions.json")
+    adapter = source/"sft_train"/"adapter"
+    processor, model = load_model(args, adapter=adapter)
+    direct, _ = evaluate(args, processor, model, qs, "direct_recheck")
+    assert [r["answer"] for r in direct] == [r["answer"] for r in original], "重载权重后原始预测不一致"
+    _, _, result = correct(args, processor, model, qs, direct, "harness")
+    reference = read_json(source/"sft_harness"/"metrics.json")
+    comparison = dict(grid=args.grid, source_run=args.source_run,
+        source_adapter_sha256=sha_file(adapter/"adapter_model.safetensors"),
+        source_predictions_sha256=sha_file(source/"sft_eval"/"predictions.json"),
+        direct_predictions_identical=True, optimizer_steps=0, tool_context=args.tool_context,
+        reference_correct=reference["correct"], candidate_correct=result["correct"],
+        reference_loc=reference["loc_correct"], candidate_loc=result["loc_correct"],
+        candidate_tool_fixed=result["tool_fixed"],
+        candidate_loc_mean_iou=result["loc_mean_iou"],
+        feedback_net_gain=result["correct"]-reference["correct"])
+    write_json(args.out/"feedback_comparison.json", comparison)
+    write_json(args.out/"completion.json", dict(status="complete", optimizer_steps=0))
+    print("FEEDBACK_PROBE_COMPLETE", json.dumps(comparison, ensure_ascii=False), flush=True)
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--mode", choices=["make_data", "make_sft", "make_seed", "check", "model_check", "run", "infer", "sft", "eval", "rsi", "summarize"], required=True)
+    ap.add_argument("--mode", choices=["make_data", "make_sft", "make_seed", "check", "model_check", "feedback_probe", "run", "infer", "sft", "eval", "rsi", "summarize"], required=True)
     ap.add_argument("--root", type=Path, default=Path(os.environ.get("LAB06_ROOT", Path(__file__).resolve().parent.parent)))
     ap.add_argument("--model", default=os.environ.get("LAB06_MODEL", str(Path.home()/"llm_course_lab05/models/SmolVLM-256M-Instruct")))
     ap.add_argument("--grid", type=int, choices=[4, 8], default=4)
     ap.add_argument("--steps", type=int, default=10)
+    ap.add_argument("--seed-steps", type=int, help="种子 SFT 步数；未指定时沿用 --steps")
+    ap.add_argument("--rsi-steps", type=int, help="每轮 RSI 步数；未指定时沿用 --steps")
+    ap.add_argument("--run-name", default="", help="追加实验使用独立子目录，不覆盖原基准")
+    ap.add_argument("--tool-context", choices=["reference", "candidate"], default="reference",
+                    help="candidate 会回传实际候选坐标和高亮图，绝不提供 GT 坐标")
+    ap.add_argument("--source-run", help="反馈对照所用的已有训练实验名")
     ap.add_argument("--rounds", type=int, default=2)
     args = ap.parse_args()
-    args.out = args.root/"outputs"/f"grid{args.grid}"
+    args.seed_steps = args.seed_steps if args.seed_steps is not None else args.steps
+    args.rsi_steps = args.rsi_steps if args.rsi_steps is not None else args.steps
+    args.out = args.root/"outputs"/args.run_name/f"grid{args.grid}"
+    if args.mode == "feedback_probe":
+        assert args.source_run and args.run_name != args.source_run
+        feedback_probe(args)
+        return
     if args.mode == "make_data":
         make_dataset(args.root)
         return

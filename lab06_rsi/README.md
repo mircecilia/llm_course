@@ -25,6 +25,37 @@ bash "$LAB06_ROOT/src/run_all.sh"
 
 已有 `outputs/grid4` 或 `outputs/grid8` 时主程序拒绝覆盖。重跑请使用新实验根目录，不要删除旧结果。
 
+### 授权追加训练
+
+原始 10 步结果仍保存在 `outputs/grid4`、`outputs/grid8`。`run_extended.sh` 将种子 SFT 与每轮 RSI 步数分开配置，追加实验另存，不改变场景、种子、问题或判分规则：
+
+```bash
+# 参数依次为：种子 SFT 步数、每轮 RSI 步数、独立实验名。
+bash "$LAB06_ROOT/src/run_extended.sh" 60 10 s60_r10
+# 进一步追加也必须换实验名，保留前一次尝试。
+bash "$LAB06_ROOT/src/run_extended.sh" 150 10 s150_r10
+# 展示实际数据回流的版本：种子 60 步，两轮 RSI 各 30 步。
+bash "$LAB06_ROOT/src/run_extended.sh" 60 30 s60_r30
+```
+
+每组从同一基座与 LoRA 初始化重新起训；4×4 与 8×8 的预算相同。输出在 `outputs/<实验名>/grid4`、`grid8`，日志在 `logs/<实验名>`。复核某次追加结果时给 `audit_results.py` 添加 `--run-name <实验名>`。默认 `run_all.sh` 仍复现指南的 10 步版本，不能把追加步数写成原始预算。
+
+完整闭环过程优先查看 `s60_r30`；更长种子训练的对照查看 `s150_r10`。两者不能混填为同一次运行。比较全部预算：
+
+```bash
+"$LAB06_ROOT/.venv/bin/python" "$LAB06_ROOT/src/audit_results.py" --root "$LAB06_ROOT" --compare-runs baseline10 s60_r10 s150_r10 s60_r30
+```
+
+### 固定权重的反馈上下文对照
+
+原反馈只说明候选格覆盖不足，却没有在工具重答时展示具体候选。`--tool-context candidate` 可回传模型自己的候选坐标及高亮图；不提供 GT 正确坐标，验证器仍在未标记的原图上运行。默认行为仍是原反馈，新增方式仅作为独立对照。
+
+```bash
+bash "$LAB06_ROOT/src/run_feedback_probes.sh"
+```
+
+此脚本分别复用 `s60_r30`、`s150_r10` 的 SFT 权重，先逐字核对重载后的 15 个原始回答，再比较反馈方式，优化器更新为 0。输出在 `outputs/feedback_<源实验名>/grid*/feedback_comparison.json`。该对照没有观察到额外答对，不能写成有效改进；训练数据回流的证据来自原反馈版 RSI 的真实自查纠错。
+
 ## 数据与评测口径
 
 - 256×256 白底、4 色圆/方、轮廓宽度 4，与参考场景生成顺序一致。训练图 40 张 seed=2026，评测图 15 张 seed=42。
@@ -57,8 +88,14 @@ bash "$LAB06_ROOT/src/run_all.sh"
 | 图表 | `rsi_curves.png`、`training_loss.png`、`outputs/grid_comparison.png` |
 | 选做 A 对照 | `outputs/grid_comparison.csv` |
 | 自动重算与公平性检查 | `outputs/audit.json` |
+| 追加预算完整对照 | `outputs/extension_budget_comparison.csv/png` |
+| 固定权重反馈对照 | `outputs/feedback_comparison.csv` |
+
+追加版本表中的 `outputs/grid*` 均须替换为 `outputs/<实验名>/grid*`，不要误读原始 10 步的零定位结果。
 
 代表性案例应从实际记录选取“直接答对、自查改对、验证器纠对、仍然失败”。某类没有发生时标明未观察到，不能手工生成模型回答。`自查改写`、`自查改对`、`工具调用`与`工具改对`是不同计数。
+
+数据池规模按记录数统计。因为种子已含同题 GT，新增的模型纠错回放通常是同题重加权，不等于获得了同样多的新独立问题。计数的首数字判分可能接受“1、2、3”之类歧义回答，应另看原文，不能把指南正确率直接当成完整回答质量。
 
 只复核现有结果，不训练：
 

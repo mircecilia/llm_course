@@ -63,6 +63,8 @@ python .\lab04_rag\hw4_rag.py --mode all
 
 实验六另用全新目录及独立 venv，FP32 基座 + LoRA，完成两轮 RSI 和 8×8 网格选做；不复用实验五适配器。详见 [实验六复现指南](lab06_rsi/README.md)。
 
+实验六原始 10 步基准保留；授权追加的 60/150 步种子与每轮 10/30 步 RSI 均分目录保存。完整回流过程查看 `s60_r30`，不要将其与预算对照 `s150_r10` 的数据混用。
+
 ## 本地文件与 Git
 
 前四次实验的新结果保存到仓库根目录的 `lab01_outputs/`、`lab02_outputs/`、`lab02_extra_outputs/`、`lab03_outputs/`、`lab04_outputs/`。实验五保存到独立远端 `$LAB05_ROOT/outputs/`，本地备份为 `lab05_outputs/`。这些目录都不纳入 Git。源码中的指南小语料常量和合成数据生成逻辑保留，以便复现；外部数据和运行产物不提交。
