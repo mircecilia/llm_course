@@ -1,6 +1,7 @@
 # 只跟踪复现说明和实验关键程序；本地资料、结果、密钥一律不纳入 Git。
 /*
 !/.gitignore
+!/.gitattributes
 !/README.md
 !/复现说明.md
 !/lab01_mlp/
@@ -8,6 +9,7 @@
 !/lab03_min_llm/
 !/lab04_rag/
 !/lab05_smolvlm/
+!/lab06_rsi/
 
 /lab01_mlp/*
 !/lab01_mlp/mlp_digits.py
@@ -34,5 +36,14 @@
 !/lab05_smolvlm/run_all.sh
 !/lab05_smolvlm/README.md
 !/lab05_smolvlm/requirements.txt
+
+/lab06_rsi/*
+!/lab06_rsi/hw6_rsi_localize.py
+!/lab06_rsi/audit_results.py
+!/lab06_rsi/protocol.json
+!/lab06_rsi/requirements.txt
+!/lab06_rsi/run_all.sh
+!/lab06_rsi/README.md
+!/lab06_rsi/hw6_experiments.ipynb
 
 # 新增关键程序时显式加入白名单；不要对整个目录强制 git add -f。

@@ -1,6 +1,6 @@
 # 大模型课程作业
 
-前四个 CPU 实验及实验五 GPU 实验的关键程序与[复现说明](复现说明.md)。Git 只保留源码、未执行的 Notebook 和运行指南，不包含实验结果、下载数据、模型权重、缓存、报告或 API 凭据。
+前四个 CPU 实验及实验五、六远端实验的关键程序与[复现说明](复现说明.md)。Git 只保留源码、未执行的 Notebook 和运行指南，不包含实验结果、下载数据、模型权重、缓存、报告或 API 凭据。
 
 ## 目录
 
@@ -26,6 +26,14 @@ lab05_smolvlm/
 ├── requirements.txt               # 已验证的直接依赖版本，不含环境或下载数据
 ├── run_all.sh                     # 两卡并行独立 DPO 对照
 └── README.md                      # 远端隔离环境与复现步骤
+lab06_rsi/
+├── hw6_rsi_localize.py            # 网格定位、两路纠错、SFT 与两轮 RSI
+├── audit_results.py               # 指标重算、数据池、训练预算与网格对照核验
+├── hw6_experiments.ipynb          # 分步入口与真实结果读取
+├── protocol.json                  # 固定场景、模型、步数与评测口径
+├── requirements.txt
+├── run_all.sh                     # 两卡并行 4×4 必做与 8×8 选做
+└── README.md                      # 复现与参考代码补齐说明
 README.md
 复现说明.md
 .gitignore
@@ -53,13 +61,15 @@ python .\lab04_rag\hw4_rag.py --mode all
 
 实验五在远端新建目录和独立环境中运行，不使用本机 base。完整命令与结果文件说明见 [实验五复现指南](lab05_smolvlm/README.md)。
 
+实验六另用全新目录及独立 venv，FP32 基座 + LoRA，完成两轮 RSI 和 8×8 网格选做；不复用实验五适配器。详见 [实验六复现指南](lab06_rsi/README.md)。
+
 ## 本地文件与 Git
 
 前四次实验的新结果保存到仓库根目录的 `lab01_outputs/`、`lab02_outputs/`、`lab02_extra_outputs/`、`lab03_outputs/`、`lab04_outputs/`。实验五保存到独立远端 `$LAB05_ROOT/outputs/`，本地备份为 `lab05_outputs/`。这些目录都不纳入 Git。源码中的指南小语料常量和合成数据生成逻辑保留，以便复现；外部数据和运行产物不提交。
 
 `.gitignore` 使用关键文件白名单。新增程序须显式补充白名单；不要用 `git add -f` 强制加入结果、报告或密钥。提交前清空 Notebook 输出，避免把图片、日志或真实回答嵌入代码仓库。
 
-仓库按实验编号分为五个源码目录，根目录只跟踪本页、复现说明和 `.gitignore`。本地另存的报告、课程资料、旧结果和临时文件保留原位，不通过删除它们来“清理”Git。未执行 Notebook 不携带训练结果；报告中的人工判断与自动指标应分别核验。
+仓库按实验编号分为六个源码目录，根目录只跟踪本页、复现说明和 `.gitignore`。本地另存的报告、课程资料、旧结果和临时文件保留原位，不通过删除它们来“清理”Git。未执行 Notebook 不携带训练结果；报告中的人工判断与自动指标应分别核验。
 
 实验五从远端取回的完整程序、日志和结果另存为本地 `lab05_remote_backup_<日期>/`，包含训练适配器和源码历史；与早期 `lab05_outputs/` 副本并存。取回时逐文件核对 SHA-256，这些备份目录全部由白名单规则排除，不提交 Git。
 
