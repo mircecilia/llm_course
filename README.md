@@ -33,6 +33,8 @@ lab06_rsi/
 ├── protocol.json                  # 固定场景、模型、步数与评测口径
 ├── requirements.txt
 ├── run_all.sh                     # 两卡并行 4×4 必做与 8×8 选做
+├── run_extended.sh                # 独立目录保存追加训练预算
+├── run_feedback_probes.sh         # 固定权重下的反馈上下文对照
 └── README.md                      # 复现与参考代码补齐说明
 README.md
 复现说明.md
@@ -63,6 +65,8 @@ python .\lab04_rag\hw4_rag.py --mode all
 
 实验六另用全新目录及独立 venv，FP32 基座 + LoRA，完成两轮 RSI 和 8×8 网格选做；不复用实验五适配器。详见 [实验六复现指南](lab06_rsi/README.md)。
 
+从克隆的仓库复现实验五、六时，先按各自指南把关键文件复制到独立实验目录的 `src/`，并创建 `logs/`；仅克隆本仓库不会附带模型、环境、历史输出或适配器。
+
 实验六原始 10 步基准保留；授权追加的 60/150 步种子与每轮 10/30 步 RSI 均分目录保存。完整回流过程查看 `s60_r30`，不要将其与预算对照 `s150_r10` 的数据混用。
 
 ## 本地文件与 Git
@@ -76,3 +80,5 @@ python .\lab04_rag\hw4_rag.py --mode all
 实验五从远端取回的完整程序、日志和结果另存为本地 `lab05_remote_backup_<日期>/`，包含训练适配器和源码历史；与早期 `lab05_outputs/` 副本并存。取回时逐文件核对 SHA-256，这些备份目录全部由白名单规则排除，不提交 Git。
 
 无 GPU 时可以阅读源代码、CSV/JSON 和日志、核对图片与回答；不要启动实验五的训练或完整推理，也不要把 `audit_results.py` 当作纯只读命令，它会重新写入派生汇总和图表。
+
+实验六同样区分读取历史文件与重新生成汇总：直接读取现有 CSV/JSON 不会启动模型；`audit_results.py` 和 Notebook 第 5 节会写入派生结果。Notebook 第 6 节读取原始纠错记录，不会启动训练。

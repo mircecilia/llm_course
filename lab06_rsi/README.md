@@ -1,16 +1,27 @@
 # 实验六 RSI 精准定位复现
 
-必做：指南 15 题（8 loc、4 count、3 exist），基线、10 步 SFT、验证器纠错、两轮各 10 步 RSI。选做 A：同一组场景与初始化下改为 8×8 网格，独立训练并比较正确率与 IoU。共两组、60 个优化步，不训练检测器、不使用 LLM API，不写实验报告。
+必做：指南 15 题（8 loc、4 count、3 exist），基线、10 步 SFT、验证器纠错、两轮各 10 步 RSI。选做 A：同一组场景与初始化下改为 8×8 网格，独立训练并比较正确率与 IoU。原始预算共两组、60 个优化步，不训练检测器、不使用 LLM API。本目录只提供程序和复现说明，报告与运行产物保留在本地，不纳入 Git。
 
 ## 环境与执行
 
 在远端新建 `llm_course_lab06`，程序放在其 `src/` 中，使用该目录专用 `.venv`。本次从实验五已验证的 site-packages **复制**依赖到新 venv，不共享可写包目录，不下载模型或环境、不改 base。基座读取原有 SmolVLM-256M-Instruct 快照，不复用实验五适配器。
 
+从克隆的仓库根目录准备源码，以下为 Bash 命令。`LAB06_ROOT` 应指向本次新建的实验目录：
+
+```bash
+export LAB06_ROOT=/指定路径/llm_course_lab06
+export LAB06_MODEL=/已有模型路径/SmolVLM-256M-Instruct
+mkdir -p "$LAB06_ROOT/src" "$LAB06_ROOT/logs"
+cp lab06_rsi/{hw6_rsi_localize.py,audit_results.py,protocol.json,requirements.txt,run_all.sh,run_extended.sh,run_feedback_probes.sh,hw6_experiments.ipynb,README.md} "$LAB06_ROOT/src/"
+```
+
+Git 不附带 `.venv`、模型或历史输出；先准备独立环境及完整本地模型快照，再执行训练入口。历史机器专用的环境复制脚本不作为通用复现入口。
+
 若从零安装，须先按使用者的授权规则确认，再使用镜像，仅在新 venv 安装：
 
 ```bash
-python3.10 -m venv /指定路径/llm_course_lab06/.venv
-/指定路径/llm_course_lab06/.venv/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r src/requirements.txt
+python3.10 -m venv "$LAB06_ROOT/.venv"
+"$LAB06_ROOT/.venv/bin/python" -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "$LAB06_ROOT/src/requirements.txt"
 ```
 
 完成依赖与本地模型准备后：
@@ -24,6 +35,28 @@ bash "$LAB06_ROOT/src/run_all.sh"
 `run_all.sh` 先检查解析器、数据哈希，再做一次无优化器更新的模型前向/反向检查，然后 GPU0 跑 4×4、GPU1 跑 8×8。训练和评测均使用 FP32；LoRA r=8、alpha=16、dropout=0.05，AdamW lr=1e-4，batch=1。指南标题中的 QLoRA 不等于其参考代码进行了 4-bit 量化，本实验保留参考代码的 FP32 设置。
 
 已有 `outputs/grid4` 或 `outputs/grid8` 时主程序拒绝覆盖。重跑请使用新实验根目录，不要删除旧结果。
+
+### 分步 CLI 与输出目录
+
+需要逐步观察时，使用新的独立运行名，不要与 `run_all.sh` 在同一输出目录交替执行：
+
+```bash
+PY="$LAB06_ROOT/.venv/bin/python"
+CODE="$LAB06_ROOT/src/hw6_rsi_localize.py"
+RUN=manual_grid4
+export CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+# 仅在本次新根目录尚未生成数据时执行。
+"$PY" "$CODE" --root "$LAB06_ROOT" --mode make_data
+"$PY" "$CODE" --root "$LAB06_ROOT" --grid 4 --run-name "$RUN" --mode make_seed
+"$PY" "$CODE" --root "$LAB06_ROOT" --grid 4 --run-name "$RUN" --mode infer
+"$PY" "$CODE" --root "$LAB06_ROOT" --grid 4 --run-name "$RUN" --mode sft --steps 10
+"$PY" "$CODE" --root "$LAB06_ROOT" --grid 4 --run-name "$RUN" --mode eval
+"$PY" "$CODE" --root "$LAB06_ROOT" --grid 4 --run-name "$RUN" --mode rsi --rounds 2 --steps 10
+```
+
+`make_seed` 与指南的 `make_sft` 是同一实现的两个命令名。当前 `eval` 只执行已训练适配器的 SFT 评测及 Harness，基线由 `infer` 单独生成；`run` 才包含基线、SFT、Harness 和两轮 RSI 的完整流水线。`--steps` 默认 10，但复现原预算时显式写出。
+
+不带运行名时，种子数据在 `outputs/grid4/sft_data.json`，适配器在 `outputs/grid4/sft_train/adapter/`，纠错记忆在 `outputs/grid4/rsi_memory.json`；带运行名则在 `outputs/<运行名>/grid4/` 下。独立分步运行不会自动生成另一种网格的结果，跨网格核验需要两组均完整存在。
 
 ### 授权追加训练
 
@@ -65,6 +98,14 @@ bash "$LAB06_ROOT/src/run_feedback_probes.sh"
 - 验证器按颜色连通块检查中心或 >=50% 的框面积覆盖，不识别形状，可能合并同色目标或接受另一个同色目标。主答案判分与验证器判断分别保存。
 - 与指南一样，仅在 GT 判分为错时触发纠错，原本答对的题保留原答。因此这是 oracle-triggered 教学闭环，`由对变错` 按实现为 0，不当作无 GT 部署收益。
 
+## 解释纠错记录时的边界
+
+自查尝试、坐标改写、工具重答调用、真正错转对以及验证入池是不同统计口径。工具反馈后的模型答案命中 GT，也可能被验证器误拒，不能据此写成“验证器接受成功”。独立 `s150_r10` 的 8×8 第二轮有这一类记录；不要混入 `s60_r30` 的主对照。
+
+当前 GT 框与像素连通块半开包围盒的中心计算存在网格边界差异，尚未修复。细网格下可能导致正确答案被拒绝入池；同时，颜色工具不识别形状，解析失败时的回退格诊断也不代表原答案有效。复现时保留这些原始行为，不把计划修复写成已经实施。
+
+新增纠错样本与追加训练同时发生，现有预算实验没有等步数旧池消融，不能将训练后的全部提升归因于新数据。数据池记录数增加也不等于新增独立问题。
+
 ## 参考代码的必要补齐
 
 1. 样板写 480px、`make_seed`，指南与代码写 256px、`make_sft`：采用 256px，并给命令提供别名。
@@ -97,10 +138,14 @@ bash "$LAB06_ROOT/src/run_feedback_probes.sh"
 
 数据池规模按记录数统计。因为种子已含同题 GT，新增的模型纠错回放通常是同题重加权，不等于获得了同样多的新独立问题。计数的首数字判分可能接受“1、2、3”之类歧义回答，应另看原文，不能把指南正确率直接当成完整回答质量。
 
-只复核现有结果，不训练：
+下面的核验不训练，但会重写派生 CSV、JSON 和对照图，不是纯只读查看：
 
 ```bash
 "$LAB06_ROOT/.venv/bin/python" "$LAB06_ROOT/src/audit_results.py" --root "$LAB06_ROOT"
 ```
+
+只读查看历史文件时，可以直接打开 `metrics.csv`、`round_metrics.csv` 及各阶段 JSON，或执行 Notebook 第 6 节。不要为查看记录运行训练单元。
+
+耗时应按原记录区分：`training.json` 的训练阶段包含适配器保存，不含模型加载、纠错和评测；`completion.json` 的全流程包含加载、配置校验及汇总绘图，不包含此前的数据生成和环境准备。历史独立补测另存在本地备份中，不作为每次复跑都会自动生成的输出，也不与原始耗时混加。
 
 Git 只包含关键程序、Notebook、配置与复现说明；图像、结果、权重、运行日志和报告不提交，也不自动推送。
