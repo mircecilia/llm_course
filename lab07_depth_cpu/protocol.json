@@ -1,0 +1,30 @@
+{
+  "experiment": "作业七：白模转写实纯CPU深度控制流水线",
+  "guide": "作业七_白膜转写实纯CPU深度控制流水线_实验指南（含代码附录）.pdf",
+  "guide_sha256": "5d23c8ad39d2d44b9724226419942e2481e05047d475ec44f68afcead75a2892",
+  "code_basis": "Guide appendix A.1-A.5; complete argparse, paths, logs and timing without changing core pipeline",
+  "device": "CPU only: Blender Cycles CPU and stable-diffusion.cpp Windows CPU build",
+  "scene": "球、圆环、倒角立方体、圆柱、地面、三点布光、63mm相机",
+  "seed": 42,
+  "blender_version": "4.5.13",
+  "cycles_samples": 64,
+  "depth": "Mist; frustum-visible vertex Euclidean camera distance 2%/98% bounds as appendix A.2; inverted near-white, far-black; compositor RGB PNG as appendix A.3",
+  "normal": "Normal pass mapped as n*0.5+0.5, for inspection only",
+  "main_model": "samoudi/sd-turbo-gguf@0b5ee51e9a43b33b2d32865781719a85a2248c12/sd_turbo_q4_0.gguf",
+  "control_model": "thibaud/controlnet-sd21@ba159a8ce47185aa1821db7fe10137cf2f5e04dd/control_v11p_sd21_depth.safetensors; prepare fp16 GGUF without training",
+  "backend": "leejet/stable-diffusion.cpp@be48649 (master-1017-be48649), CPU build",
+  "prompt": "photorealistic render, studio soft lighting, PBR material, preserve original 3d geometry, sharp",
+  "negative_prompt": "deformed geometry, perspective changed",
+  "sampler": "euler_a",
+  "scheduler": "discrete",
+  "threads": 16,
+  "memory_profile": {"mode":"CPU-only, serial stages, lazy parameter loading", "vae_tiling":true, "vae_tile_size":"256x256", "vae_tile_overlap":0.5, "reason":"16GiB installed RAM; use existing OS page file without changing system configuration; same profile in all comparisons"},
+  "runs": [
+    {"name":"A","resolution":512,"steps":4,"cfg":1.2,"control_strength":0.9},
+    {"name":"B","resolution":512,"steps":8,"cfg":1.2,"control_strength":0.9},
+    {"name":"C","resolution":512,"steps":4,"cfg":1.2,"control_strength":0.5}
+  ],
+  "comparison": "A/B changes steps only; A/C changes ControlNet strength only; use the same scene, camera, seed, prompts and sampler",
+  "timing": "Record Blender export wall time, sd-cli sampling and VAE log time, subprocess wall time and end-to-end wall time separately; never copy guide reference timings",
+  "optional_face": "Requires a real source portrait or an explicitly identified public sample; no identity-preservation claim without such evidence"
+}

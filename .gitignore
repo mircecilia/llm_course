@@ -10,6 +10,7 @@
 !/lab04_rag/
 !/lab05_smolvlm/
 !/lab06_rsi/
+!/lab07_depth_cpu/
 
 /lab01_mlp/*
 !/lab01_mlp/mlp_digits.py
@@ -49,3 +50,24 @@
 !/lab06_rsi/hw6_experiments.ipynb
 
 # 新增关键程序时显式加入白名单；不要对整个目录强制 git add -f。
+
+/lab07_depth_cpu/*
+!/lab07_depth_cpu/README.md
+!/lab07_depth_cpu/requirements.txt
+!/lab07_depth_cpu/protocol.json
+!/lab07_depth_cpu/download_resources.py
+!/lab07_depth_cpu/blender/
+!/lab07_depth_cpu/scripts/
+/lab07_depth_cpu/blender/*
+!/lab07_depth_cpu/blender/make_demo_scene.py
+!/lab07_depth_cpu/blender/make_human_scene.py
+!/lab07_depth_cpu/blender/export_control_maps.py
+/lab07_depth_cpu/scripts/*
+!/lab07_depth_cpu/scripts/run_pipeline.py
+!/lab07_depth_cpu/scripts/run_all.py
+!/lab07_depth_cpu/scripts/compose_head.py
+!/lab07_depth_cpu/scripts/fetch_portrait.py
+!/lab07_depth_cpu/scripts/prepare_portrait.py
+!/lab07_depth_cpu/scripts/prepare_control_model.py
+!/lab07_depth_cpu/scripts/audit_results.py
+!/lab07_depth_cpu/scripts/make_report_figures.py
