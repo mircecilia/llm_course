@@ -22,6 +22,9 @@ export HF_HUB_DISABLE_XET=1
 `requirements.txt` 只固定上述直接依赖，不冒充完整锁文件。在新的远端实验目录中，先把本目录关键程序、配置与依赖清单复制到 `src/`。仅首次准备环境时执行以下命令（已有 `.venv` 则跳过，不重建）：
 
 ```bash
+# 从克隆的仓库根目录执行；只为本次新目录准备源码，不覆盖旧实验目录。
+mkdir -p "$LAB05_ROOT/src" "$LAB05_ROOT/logs"
+cp lab05_smolvlm/{hw5_dpo.py,audit_results.py,protocol.json,requirements.txt,run_all.sh,hw5_experiments.ipynb,README.md} "$LAB05_ROOT/src/"
 # 使用已有的 Python 3.10 创建新 venv，不安装到该解释器原来的环境。
 python3.10 -m venv "$LAB05_ROOT/.venv"
 "$LAB05_ROOT/.venv/bin/python" -m pip install \
@@ -30,6 +33,23 @@ python3.10 -m venv "$LAB05_ROOT/.venv"
 ```
 
 已验证的模型 revision 为 `7e3e67edbbed1bf9888184d9df282b700a323964`。下载模型时固定此版本，并将完整快照放入 `$LAB05_ROOT/models/SmolVLM-256M-Instruct/`；不把权重提交 Git。
+
+若没有现成快照，在上述新venv内手动执行以下镜像下载步骤；模型准备完成后再打开离线模式：
+
+```bash
+"$LAB05_ROOT/.venv/bin/python" - <<'PY'
+import os
+from pathlib import Path
+from huggingface_hub import snapshot_download
+root = Path(os.environ['LAB05_ROOT'])
+revision = '7e3e67edbbed1bf9888184d9df282b700a323964'
+snapshot_download('HuggingFaceTB/SmolVLM-256M-Instruct', revision=revision,
+                  local_dir=root/'models/SmolVLM-256M-Instruct')
+(root/'models/revision.txt').write_text(revision+'\n', encoding='utf-8')
+PY
+```
+
+此命令使用前面设置的`HF_ENDPOINT=https://hf-mirror.com`。实验六可以只读复用这个固定版本的基座，分别建立自己的环境、训练目录及适配器。
 
 ## 必做与选做
 

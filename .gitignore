@@ -4,6 +4,8 @@
 !/.gitattributes
 !/README.md
 !/复现说明.md
+!/requirements-cpu.txt
+!/check_repository.py
 !/lab01_mlp/
 !/lab02_convlstm/
 !/lab03_min_llm/
@@ -28,6 +30,7 @@
 !/lab04_rag/hw4_rag_api.py
 !/lab04_rag/hw4_rag_experiments.ipynb
 !/lab04_rag/hw4_wiki_figure.py
+!/lab04_rag/requirements.txt
 
 /lab05_smolvlm/*
 !/lab05_smolvlm/hw5_dpo.py

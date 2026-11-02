@@ -17,7 +17,8 @@ lab04_rag/
 ├── hw4_rag.py                     # 三种 RAG 固定基准、K 扫描与 RRF
 ├── hw4_rag_api.py                 # LLM 知识构建、生成与变体评测
 ├── hw4_rag_experiments.ipynb       # 两层实验总览
-└── hw4_wiki_figure.py              # 固定 Wiki 条目的紧凑布局绘图
+├── hw4_wiki_figure.py              # 固定 Wiki 条目的紧凑布局绘图
+└── requirements.txt               # 实验四的直接依赖，复用根目录CPU清单
 lab05_smolvlm/
 ├── hw5_dpo.py                     # NF4 QLoRA、手写 DPO、三阶段评测
 ├── audit_results.py               # 逐题、训练步数、DPO 公式及公平性核验
@@ -45,10 +46,14 @@ lab07_depth_cpu/
 └── README.md                      # 独立本地环境与复现步骤
 README.md
 复现说明.md
+requirements-cpu.txt               # 实验一至三的历史CPU依赖版本
+check_repository.py                # 无第三方依赖的只读仓库检查
 .gitignore
 ```
 
 ## 运行入口
+
+首次克隆先读[复现说明](复现说明.md)：实验一至四使用Python 3.10课程栈，实验五、六使用独立Linux/GPU环境，实验七使用独立Python 3.12环境和便携CPU后端。依赖清单只固定历史直接依赖，不是完整环境锁文件；安装及下载均须由运行者手动执行，示例使用镜像且不安装到base。
 
 先选择已安装依赖的环境，再从仓库根目录手动运行：
 
@@ -76,13 +81,27 @@ python .\lab04_rag\hw4_rag.py --mode all
 
 实验六原始 10 步基准保留；授权追加的 60/150 步种子与每轮 10/30 步 RSI 均分目录保存。完整回流过程查看 `s60_r30`，不要将其与预算对照 `s150_r10` 的数据混用。
 
+实验七包含白模生成、控制图导出、A/B步数与A/C控制强度对照，以及D/E头像融合选做。资源版本、SHA-256、内存策略和完整命令见[实验七复现指南](lab07_depth_cpu/README.md)。不需要课程PDF或历史结果即可按固定协议运行；已有PDF时仍核对其摘要。
+
+## 提交前的只读检查
+
+在仓库根目录使用任意已有Python运行：
+
+```powershell
+python .\check_repository.py
+git status --short
+git diff --cached --name-only
+```
+
+检查器只读取Git管理的文件及白名单内的新文件，核对Python/Notebook语法、空执行输出、JSON、依赖引用、Markdown链接、Bash换行与凭据形态；不加载模型、不调用API、不运行训练或改写结果。它不等于完成全部实验的运行验证。
+
 ## 本地文件与 Git
 
 前四次实验的新结果保存到仓库根目录的 `lab01_outputs/`、`lab02_outputs/`、`lab02_extra_outputs/`、`lab03_outputs/`、`lab04_outputs/`。实验五保存到独立远端 `$LAB05_ROOT/outputs/`，本地备份为 `lab05_outputs/`。这些目录都不纳入 Git。源码中的指南小语料常量和合成数据生成逻辑保留，以便复现；外部数据和运行产物不提交。
 
 `.gitignore` 使用关键文件白名单。新增程序须显式补充白名单；不要用 `git add -f` 强制加入结果、报告或密钥。提交前清空 Notebook 输出，避免把图片、日志或真实回答嵌入代码仓库。
 
-仓库按实验编号分为七个源码目录，根目录只跟踪本页、复现说明和 `.gitignore`。本地另存的报告、课程资料、旧结果和临时文件保留原位，不通过删除它们来“清理”Git。未执行 Notebook 不携带训练结果；报告中的人工判断与自动指标应分别核验。
+仓库按实验编号分为七个源码目录；根目录跟踪本页、复现说明、CPU依赖清单、只读检查器以及Git配置文件。本地另存的报告、课程资料、旧结果和临时文件保留原位，不通过删除它们来“清理”Git。未执行Notebook不携带训练结果；报告中的人工判断与自动指标应分别核验。
 
 实验五从远端取回的完整程序、日志和结果另存为本地 `lab05_remote_backup_<日期>/`，包含训练适配器和源码历史；与早期 `lab05_outputs/` 副本并存。取回时逐文件核对 SHA-256，这些备份目录全部由白名单规则排除，不提交 Git。
 

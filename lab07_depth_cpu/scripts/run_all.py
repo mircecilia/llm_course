@@ -15,6 +15,15 @@ def call(script,*args):
     subprocess.run([sys.executable,str(ROOT/script),*map(str,args)],cwd=ROOT,check=True)
 
 
+def load_protocol():
+    """PDF是实现依据，不是运行输入；固定参数始终读取随源码提交的协议。"""
+    protocol=json.loads((ROOT/'protocol.json').read_text(encoding='utf-8'))
+    guide=ROOT.parent/protocol['guide']
+    if guide.exists():
+        assert hashlib.sha256(guide.read_bytes()).hexdigest()==protocol['guide_sha256'],'本地指南与固定协议不符'
+    return protocol
+
+
 def summarize():
     rows=[]
     for name in ['A','B','C','D','E']:
@@ -42,12 +51,8 @@ if __name__=='__main__':
     (ROOT/'output').mkdir(exist_ok=True)
     for name in ['A','B','C','D','E']:
         assert not (ROOT/'output'/name).exists(),f'{name}结果已存在，不覆盖'
-    guide=ROOT.parent/'作业七_白膜转写实纯CPU深度控制流水线_实验指南（含代码附录）.pdf'
-    protocol=json.loads((ROOT/'protocol.json').read_text(encoding='utf-8'))
-    assert hashlib.sha256(guide.read_bytes()).hexdigest()==protocol['guide_sha256']
-    print('WAITING_FOR_VERIFIED_MODEL_DOWNLOADS',flush=True)
-    while not (ROOT/'logs/resource_manifest.json').exists():
-        time.sleep(5)
+    protocol=load_protocol()
+    assert (ROOT/'logs/resource_manifest.json').exists(),'请先运行download_resources.py完成资源下载与校验'
     call('scripts/prepare_control_model.py')
     for r in protocol['runs']:
         call('scripts/run_pipeline.py','--name',r['name'],'--res',r['resolution'],

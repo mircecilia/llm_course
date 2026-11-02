@@ -19,7 +19,7 @@ $py = (Resolve-Path .\lab07_depth_cpu\.venv\Scripts\python.exe).Path
 
 ## 从头复现
 
-需要用户自行提供新版指南PDF放到仓库根目录，`protocol.json`校验其摘要。**首次运行、没有A～E结果时**执行：
+`protocol.json`随源码固定模型、种子、参数和指南摘要，不需要课程PDF才能运行。若仓库根目录有对应PDF，入口会核对摘要；没有PDF时直接使用同一固定协议。先完成上面的资源下载，再在**首次运行、没有A～E结果时**执行：
 
 ```powershell
 $env:BLENDER_USER_CONFIG = Join-Path (Resolve-Path .\lab07_depth_cpu).Path 'cache\blender_config'
@@ -47,6 +47,8 @@ $env:CUDA_VISIBLE_DEVICES = ''
 
 固定seed42、Euler A、discrete调度、16线程。所有组都采用256×256 VAE分块、overlap0.5及串行阶段，以适应本机16GB物理内存；不修改页面文件或系统设置。指南建议至少6GB可用内存，运行时仍应给系统留出余量。本次实际峰值工作集约2.9GiB，不代表包含文件映射和提交内存在内的全部内存需求。
 
+缺少`logs/resource_manifest.json`时，入口提示先执行下载程序，不会一直等待。这个文件由下载器在全部资源通过SHA-256校验后生成；不要手工伪造。下载器支持校验已有文件和续传分片，但会解压便携软件并重新写入下载清单，属于准备步骤，不是只读检查。
+
 套件拒绝覆盖已有A～E目录；再次独立运行必做组可使用新名称，例如：
 
 ```powershell
@@ -64,5 +66,9 @@ $env:CUDA_VISIBLE_DEVICES = ''
 - E虽然设置6步，strength0.35在该版本后端实际执行3次采样循环；不能直接用6除采样时间与txt2img比较。
 - 数据图按Raw导出，避免AgX改变深度/法线数值；白模视觉参考仍用AgX。Normal仅检查方向，不输入ControlNet。
 - `output/figures`只给实际图像排版加标签，不造图、不改实验数据。
+
+## 头像选做的实际实现
+
+`compose_head.py`从人体深度图上部中央前景定位目标头框；源头像的人脸框比例通过`--face`给定，不运行自动人脸检测。软抠图后内缩、羽化，使用预乘alpha等比缩放；默认不横向拉伸。随后执行亮度匹配、接触阴影、Poisson融合和固定seed颗粒匹配，再由`run_all.py`执行低强度img2img与Depth ControlNet协调。全部步骤的参数及实际命令保存在E组JSON与日志中；完成链路不代表已经解决比例、接缝或身份保持问题。
 
 本次结果含真实失败：A/B后方立方体丢失、圆柱开口化，B背景条纹，C球体环化；选做协调重绘改变了原头像外观。固定种子可帮助复现，本机以外的后端版本、CPU指令和浮点归约仍可能引起图像差异。不要把运行成功等同于几何或身份完全保持。

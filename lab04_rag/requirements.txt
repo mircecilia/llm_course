@@ -1,0 +1,4 @@
+# 实验四沿用课程CPU栈；API客户端使用标准库，不需要API SDK。
+-r ../requirements-cpu.txt
+networkx==3.4.2
+sentence-transformers==6.1.0

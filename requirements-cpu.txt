@@ -1,0 +1,6 @@
+# 实验一至三的历史直接依赖；Python 3.10。不是全部传递依赖的锁文件。
+# Notebook 的 Jupyter/IPython 内核工具另按复现说明准备。
+torch==2.5.1
+scikit-learn==1.7.2
+numpy==2.0.1
+matplotlib==3.10.9
