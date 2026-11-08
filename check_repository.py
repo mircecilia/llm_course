@@ -18,13 +18,19 @@ def git_paths(*args):
 def main():
     # 包括白名单内尚未暂存的新文件；不读取被忽略的报告、密钥或历史结果。
     files = sorted(set(git_paths()) | set(git_paths('--others', '--exclude-standard')))
-    errors = []
+    ignored_tracked = set(git_paths('--cached', '--ignored', '--exclude-standard'))
+    errors = [f'{name}: 已被跟踪，但不在提交白名单' for name in sorted(ignored_tracked)]
+    repo_paths = {ROOT / name for name in files if name not in ignored_tracked}
+    link_targets = repo_paths | {parent for path in repo_paths for parent in path.parents if parent.is_relative_to(ROOT)}
     counts = dict(python=0, notebooks=0, json=0, markdown=0)
-    allowed_suffixes = {'.py', '.ipynb', '.json', '.md', '.sh', '.txt'}
-    forbidden_parts = {'.venv', 'models', 'vendor', 'cache', 'outputs', 'output', 'logs', '__pycache__'}
+    allowed_suffixes = {'.py', '.ipynb', '.json', '.md', '.sh', '.ps1', '.txt'}
+    forbidden_parts = {'.venv', 'models', 'vendor', 'cache', 'outputs', 'output', 'logs', '__pycache__',
+                       'runs_distill', 'report_qa'}
     secret = re.compile(r'(?<![\w-])(?:sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|hf_[A-Za-z0-9]{30,})')
     link = re.compile(r'(?<!!)\[[^\]\n]*\]\(([^)\n]+)\)')
     for name in files:
+        if name in ignored_tracked:
+            continue
         path = ROOT / name
         if not path.is_file():
             errors.append(f'{name}: 被跟踪文件不存在')
@@ -60,14 +66,14 @@ def main():
                 if not target or target.startswith('#') or re.match(r'[A-Za-z][\w+.-]*:', target):
                     continue
                 local = unquote(target.split('#', 1)[0])
-                if local and not (path.parent / local).exists():
-                    errors.append(f'{name}: 本地链接不存在: {local}')
+                if local and (path.parent / local).resolve() not in link_targets:
+                    errors.append(f'{name}: 本地链接目标未纳入仓库: {local}')
         elif path.suffix == '.sh' and b'\r\n' in raw:
             errors.append(f'{name}: Bash脚本含CRLF，应按.gitattributes保存为LF')
         if path.name.startswith('requirements'):
             for line in text.splitlines():
-                if line.startswith('-r ') and not (path.parent / line[3:].strip()).is_file():
-                    errors.append(f'{name}: 引用的依赖清单不存在')
+                if line.startswith('-r ') and (path.parent / line[3:].strip()).resolve() not in repo_paths:
+                    errors.append(f'{name}: 引用的依赖清单未纳入仓库')
     if errors:
         print('\n'.join(errors))
         return 1

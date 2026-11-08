@@ -1,110 +1,30 @@
 # 大模型课程作业
 
-前四个 CPU 实验、实验五六远端实验及实验七本地 CPU 流水线的关键程序与[复现说明](复现说明.md)。Git 只保留源码、未执行的 Notebook 和运行指南，不包含实验结果、下载数据、模型权重、缓存、报告或 API 凭据。
+本仓库收录八次实验的关键程序、未执行的 Notebook、依赖清单和运行说明。首次运行请从[总复现说明](复现说明.md)选定对应环境，再执行该实验的命令。实验五、六使用远端 Linux/GPU，其余实验使用 CPU。
 
-## 目录
+| 实验 | 主题 | 入口 |
+| --- | --- | --- |
+| 01 | MLP 手写分类与控制变量对照 | [训练与学习率扫描](lab01_mlp/mlp_digits.py) |
+| 02 | ConvLSTM 弹跳小球预测 | [单球 Notebook](lab02_convlstm/convlstm_bounce.ipynb)、[双球选做](lab02_convlstm/convlstm_extra_multiball.ipynb) |
+| 03 | 字符级最小语言模型 | [训练与采样脚本](lab03_min_llm/min_llm.py)、[Notebook](lab03_min_llm/min_llm_experiments.ipynb) |
+| 04 | Vector RAG、GraphRAG、WikiRAG | [固定基准](lab04_rag/hw4_rag.py)、[API 扩展](lab04_rag/hw4_rag_api.py)、[Notebook](lab04_rag/hw4_rag_experiments.ipynb) |
+| 05 | SmolVLM QLoRA 与 DPO | [远端复现指南](lab05_smolvlm/README.md) |
+| 06 | RSI 定位、自查与验证器 | [远端复现指南](lab06_rsi/README.md) |
+| 07 | 白模转写实与头像融合 | [本地 CPU 复现指南](lab07_depth_cpu/README.md) |
+| 08 | 字符级语言模型知识蒸馏 | [本地 CPU 复现指南](lab08_distill/README.md) |
 
-```text
-lab01_mlp/
-└── mlp_digits.py                  # MLP 对照、最优组合复测、学习率扫描
-lab02_convlstm/
-├── convlstm_bounce.ipynb           # 单球 ConvLSTM 与六组对照
-└── convlstm_extra_multiball.ipynb  # 双球扩展选做
-lab03_min_llm/
-├── min_llm.py                     # 字符级 GPT、采样、重复惩罚
-└── min_llm_experiments.ipynb       # 实验总览与结果读取
-lab04_rag/
-├── hw4_rag.py                     # 三种 RAG 固定基准、K 扫描与 RRF
-├── hw4_rag_api.py                 # LLM 知识构建、生成与变体评测
-├── hw4_rag_experiments.ipynb       # 两层实验总览
-├── hw4_wiki_figure.py              # 固定 Wiki 条目的紧凑布局绘图
-└── requirements.txt               # 实验四的直接依赖，复用根目录CPU清单
-lab05_smolvlm/
-├── hw5_dpo.py                     # NF4 QLoRA、手写 DPO、三阶段评测
-├── audit_results.py               # 逐题、训练步数、DPO 公式及公平性核验
-├── hw5_experiments.ipynb           # 分步运行和真实结果读取
-├── protocol.json                  # 训练前固定的实验口径
-├── requirements.txt               # 已验证的直接依赖版本，不含环境或下载数据
-├── run_all.sh                     # 两卡并行独立 DPO 对照
-└── README.md                      # 远端隔离环境与复现步骤
-lab06_rsi/
-├── hw6_rsi_localize.py            # 网格定位、两路纠错、SFT 与两轮 RSI
-├── audit_results.py               # 指标重算、数据池、训练预算与网格对照核验
-├── hw6_experiments.ipynb          # 分步入口与真实结果读取
-├── protocol.json                  # 固定场景、模型、步数与评测口径
-├── requirements.txt
-├── run_all.sh                     # 两卡并行 4×4 必做与 8×8 选做
-├── run_extended.sh                # 独立目录保存追加训练预算
-├── run_feedback_probes.sh         # 固定权重下的反馈上下文对照
-└── README.md                      # 复现与参考代码补齐说明
-lab07_depth_cpu/
-├── blender/                      # 白模场景与深度/法线/白模三图导出
-├── scripts/                      # CPU流水线、头像选做、只读核验与图像排版
-├── download_resources.py          # 固定版本镜像下载与摘要核验
-├── protocol.json
-├── requirements.txt
-└── README.md                      # 独立本地环境与复现步骤
-README.md
-复现说明.md
-requirements-cpu.txt               # 实验一至三的历史CPU依赖版本
-check_repository.py                # 无第三方依赖的只读仓库检查
-.gitignore
-```
+实验一至四使用 Python 3.10 课程环境。实验五至八各用独立环境，版本、安装来源、运行顺序和输出位置见对应说明。实验四的 API 阶段会发出真实请求，密钥由使用者通过环境变量提供。实验八的真实语料选做读取实验三源码内置的古诗，克隆时保留两个实验目录。
 
-## 运行入口
+## 提交前检查
 
-首次克隆先读[复现说明](复现说明.md)：实验一至四使用Python 3.10课程栈，实验五、六使用独立Linux/GPU环境，实验七使用独立Python 3.12环境和便携CPU后端。依赖清单只固定历史直接依赖，不是完整环境锁文件；安装及下载均须由运行者手动执行，示例使用镜像且不安装到base。
+从仓库根目录使用 Python 3.10 或更新版本运行：
 
-先选择已安装依赖的环境，再从仓库根目录手动运行：
-
-```powershell
-# 若本机已有课程使用的 myenv。
-conda activate myenv
-
-# 实验一（另用 --experiment lr_scan 运行扫描）。
-python .\lab01_mlp\mlp_digits.py --experiment all
-
-# 实验三。
-python .\lab03_min_llm\min_llm.py --suite
-
-# 实验四第一层，需事先准备本地嵌入模型。
-python .\lab04_rag\hw4_rag.py --mode all
-```
-
-实验二使用对应 Notebook，在已准备好依赖的 Jupyter 内核中按顺序执行。实验四第二层需要自行配置 API 环境变量，会产生网络请求和费用；全部命令及运行顺序见[复现说明](复现说明.md)。不要盲目整本运行 Notebook 或覆盖已有结果。
-
-实验五在远端新建目录和独立环境中运行，不使用本机 base。完整命令与结果文件说明见 [实验五复现指南](lab05_smolvlm/README.md)。
-
-实验六另用全新目录及独立 venv，FP32 基座 + LoRA，完成两轮 RSI 和 8×8 网格选做；不复用实验五适配器。详见 [实验六复现指南](lab06_rsi/README.md)。
-
-从克隆的仓库复现实验五、六时，先按各自指南把关键文件复制到独立实验目录的 `src/`，并创建 `logs/`；仅克隆本仓库不会附带模型、环境、历史输出或适配器。
-
-实验六原始 10 步基准保留；授权追加的 60/150 步种子与每轮 10/30 步 RSI 均分目录保存。完整回流过程查看 `s60_r30`，不要将其与预算对照 `s150_r10` 的数据混用。
-
-实验七包含白模生成、控制图导出、A/B步数与A/C控制强度对照，以及D/E头像融合选做。资源版本、SHA-256、内存策略和完整命令见[实验七复现指南](lab07_depth_cpu/README.md)。不需要课程PDF或历史结果即可按固定协议运行；已有PDF时仍核对其摘要。
-
-## 提交前的只读检查
-
-在仓库根目录使用任意已有Python运行：
-
-```powershell
+~~~powershell
 python .\check_repository.py
-git status --short
+git diff --cached --check
 git diff --cached --name-only
-```
+~~~
 
-检查器只读取Git管理的文件及白名单内的新文件，核对Python/Notebook语法、空执行输出、JSON、依赖引用、Markdown链接、Bash换行与凭据形态；不加载模型、不调用API、不运行训练或改写结果。它不等于完成全部实验的运行验证。
+[检查器](check_repository.py)只读检查提交白名单、语法、Notebook 空输出、本地链接、依赖引用、Bash 换行和常见凭据形态。完整的运行验证按各实验指南执行。
 
-## 本地文件与 Git
-
-前四次实验的新结果保存到仓库根目录的 `lab01_outputs/`、`lab02_outputs/`、`lab02_extra_outputs/`、`lab03_outputs/`、`lab04_outputs/`。实验五保存到独立远端 `$LAB05_ROOT/outputs/`，本地备份为 `lab05_outputs/`。这些目录都不纳入 Git。源码中的指南小语料常量和合成数据生成逻辑保留，以便复现；外部数据和运行产物不提交。
-
-`.gitignore` 使用关键文件白名单。新增程序须显式补充白名单；不要用 `git add -f` 强制加入结果、报告或密钥。提交前清空 Notebook 输出，避免把图片、日志或真实回答嵌入代码仓库。
-
-仓库按实验编号分为七个源码目录；根目录跟踪本页、复现说明、CPU依赖清单、只读检查器以及Git配置文件。本地另存的报告、课程资料、旧结果和临时文件保留原位，不通过删除它们来“清理”Git。未执行Notebook不携带训练结果；报告中的人工判断与自动指标应分别核验。
-
-实验五从远端取回的完整程序、日志和结果另存为本地 `lab05_remote_backup_<日期>/`，包含训练适配器和源码历史；与早期 `lab05_outputs/` 副本并存。取回时逐文件核对 SHA-256，这些备份目录全部由白名单规则排除，不提交 Git。
-
-无 GPU 时可以阅读源代码、CSV/JSON 和日志、核对图片与回答；不要启动实验五的训练或完整推理，也不要把 `audit_results.py` 当作纯只读命令，它会重新写入派生汇总和图表。
-
-实验六同样区分读取历史文件与重新生成汇总：直接读取现有 CSV/JSON 不会启动模型；`audit_results.py` 和 Notebook 第 5 节会写入派生结果。Notebook 第 6 节读取原始纠错记录，不会启动训练。
+Git 白名单仅开放源程序、复现资料和必要配置。历史输出、外部数据、模型权重、报告、课程资料、密钥及本地环境均保存在本地。新增源码须显式更新白名单，Notebook 在提交前清除输出和执行计数。

@@ -13,6 +13,7 @@
 !/lab05_smolvlm/
 !/lab06_rsi/
 !/lab07_depth_cpu/
+!/lab08_distill/
 
 /lab01_mlp/*
 !/lab01_mlp/mlp_digits.py
@@ -74,3 +75,10 @@
 !/lab07_depth_cpu/scripts/prepare_control_model.py
 !/lab07_depth_cpu/scripts/audit_results.py
 !/lab07_depth_cpu/scripts/make_report_figures.py
+
+/lab08_distill/*
+!/lab08_distill/README.md
+!/lab08_distill/requirements.txt
+!/lab08_distill/distill_lm.py
+!/lab08_distill/run_extensions.py
+!/lab08_distill/run_all.ps1
